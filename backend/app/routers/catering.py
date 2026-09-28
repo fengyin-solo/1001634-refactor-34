@@ -6,20 +6,18 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas import ActionResult, EntryPayload, PageResult
-from app.services.catering import CateringService
+from app.services.catering import STATUS_ORDER, CateringService
 
 router = APIRouter(prefix="/api/catering", tags=["航空配餐"])
 
 service = CateringService()
-
-LIST_FIELDS = ["配餐单号", "关联航班", "餐食份数", "餐食类别", "配餐车辆", "送达时刻", "接收人员", "配餐状态"]
-STATUSES = ["待配送", "配送中", "已签收", "已取消"]
+STATUS_DESCRIPTION = "、".join(STATUS_ORDER)
 
 
 @router.get("", response_model=PageResult[dict])
 def list_entries(
     keyword: str | None = Query(default=None, description="按配餐单号检索"),
-    status: str | None = Query(default=None, description="待配送、配送中、已签收、已取消"),
+    status: str | None = Query(default=None, description=STATUS_DESCRIPTION),
     page: int = 1,
     size: int = 20,
 ) -> PageResult[dict]:

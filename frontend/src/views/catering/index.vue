@@ -36,7 +36,7 @@
       </thead>
       <tbody>
         <tr v-for="row in rows" :key="String(row.id)">
-          <td v-for="column in columns" :key="column">{{ row[column] ?? '—' }}</td>
+          <td v-for="column in columns" :key="column">{{ displayDeliveryCell(row, column) }}</td>
           <td class="row-actions">
             <button
               v-for="action in actions"
@@ -66,14 +66,17 @@
 import { onMounted, ref } from 'vue'
 
 import { request } from '@/api/client'
+import {
+  ENDPOINT,
+  actions,
+  columns,
+  deliveryActionBody,
+  deliverySummaryCards,
+  displayDeliveryCell,
+  type Row,
+} from './model'
 
-type Row = Record<string, string | number | null>
-
-const ENDPOINT = '/api/catering'
-const columns = ["配餐单号", "关联航班", "餐食份数", "餐食类别", "配餐车辆", "送达时刻", "接收人员", "配餐状态"]
-const actions = ["安排配送", "确认签收", "取消配送"]
-const statuses = ["待配送", "配送中", "已签收", "已取消"]
-const stats = [{"label": "待配送配餐", "value": 0}, {"label": "本月配餐份数", "value": 0}, {"label": "取消单数", "value": 0}]
+const stats = deliverySummaryCards()
 
 const rows = ref<Row[]>([])
 const total = ref(0)
@@ -99,7 +102,7 @@ async function runAction(action: string, row: Row) {
   try {
     const response = await request(`${ENDPOINT}/${row.id}/actions`, {
       method: 'POST',
-      body: JSON.stringify({ action }),
+      body: deliveryActionBody(action),
     })
     if (!response.ok) {
       throw new Error('航空配餐动作未生效，请稍后重试')

@@ -7,10 +7,12 @@ from __future__ import annotations
 from typing import Any
 
 from app.seed import SEED_ROWS
+from app.services.catering import MODULE as CATERING_MODULE, CateringService
 
 
 class Store:
     def __init__(self) -> None:
+        self.catering_service = CateringService(self)
         self._tables: dict[str, list[dict[str, Any]]] = {
             name: [dict(row) for row in rows] for name, rows in SEED_ROWS.items()
         }
@@ -31,6 +33,10 @@ class Store:
         modules: list[dict[str, object]] = []
         for name in self.module_names():
             rows = self.rows(name)
+            if name == CATERING_MODULE:
+                summary = self.catering_service.summarize_entries(rows)
+                modules.append({"name": name, **summary})
+                continue
             modules.append({
                 "name": name,
                 "created": len(rows),
