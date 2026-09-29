@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.seed import SEED_ROWS
+from app.services import catering_delivery
 
 
 class Store:
@@ -31,12 +32,23 @@ class Store:
         modules: list[dict[str, object]] = []
         for name in self.module_names():
             rows = self.rows(name)
-            modules.append({
-                "name": name,
-                "created": len(rows),
-                "pending": sum(1 for row in rows if row.get("pending")),
-                "abnormal": sum(1 for row in rows if row.get("abnormal")),
-            })
+            if name == catering_delivery.MODULE:
+                # 配餐的汇总口径与签收动作、列表展示共用同一份实现，
+                # 这里只取 created/pending/abnormal 三个既有字段，保持看板结构不变。
+                summary = catering_delivery.summarize(rows)
+                modules.append({
+                    "name": name,
+                    "created": summary["created"],
+                    "pending": summary["pending"],
+                    "abnormal": summary["abnormal"],
+                })
+            else:
+                modules.append({
+                    "name": name,
+                    "created": len(rows),
+                    "pending": sum(1 for row in rows if row.get("pending")),
+                    "abnormal": sum(1 for row in rows if row.get("abnormal")),
+                })
         cards = [
             {"label": "业务模块", "value": len(modules)},
             {"label": "今日新增", "value": sum(int(item["created"]) for item in modules)},

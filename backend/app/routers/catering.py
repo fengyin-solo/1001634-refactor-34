@@ -12,9 +12,6 @@ router = APIRouter(prefix="/api/catering", tags=["航空配餐"])
 
 service = CateringService()
 
-LIST_FIELDS = ["配餐单号", "关联航班", "餐食份数", "餐食类别", "配餐车辆", "送达时刻", "接收人员", "配餐状态"]
-STATUSES = ["待配送", "配送中", "已签收", "已取消"]
-
 
 @router.get("", response_model=PageResult[dict])
 def list_entries(

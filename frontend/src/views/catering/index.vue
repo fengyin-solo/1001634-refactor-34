@@ -36,7 +36,7 @@
       </thead>
       <tbody>
         <tr v-for="row in rows" :key="String(row.id)">
-          <td v-for="column in columns" :key="column">{{ row[column] ?? '—' }}</td>
+          <td v-for="column in columns" :key="column">{{ formatCell(row, column) }}</td>
           <td class="row-actions">
             <button
               v-for="action in actions"
@@ -63,23 +63,35 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import { request } from '@/api/client'
+import {
+  ENDPOINT,
+  actions,
+  columns,
+  formatCell,
+  summarize,
+  type CateringRow,
+} from './delivery'
 
-type Row = Record<string, string | number | null>
-
-const ENDPOINT = '/api/catering'
-const columns = ["配餐单号", "关联航班", "餐食份数", "餐食类别", "配餐车辆", "送达时刻", "接收人员", "配餐状态"]
-const actions = ["安排配送", "确认签收", "取消配送"]
-const statuses = ["待配送", "配送中", "已签收", "已取消"]
-const stats = [{"label": "待配送配餐", "value": 0}, {"label": "本月配餐份数", "value": 0}, {"label": "取消单数", "value": 0}]
+type Row = CateringRow
 
 const rows = ref<Row[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+
+// 汇总口径与签收动作、列表展示同源，不再单独维护一份硬编码统计。
+const stats = computed(() => {
+  const summary = summarize(rows.value)
+  return [
+    { label: '待配送配餐', value: summary.pending },
+    { label: '本月配餐份数', value: summary.totalPortions },
+    { label: '取消单数', value: summary.cancelled },
+  ]
+})
 
 function resetFilters() {
   filters.value = {}
